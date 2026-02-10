@@ -2,6 +2,5 @@
 
 Reusable statistical helper functions for analysis and visualization.
 
-## Installation (editable mode)
-```bash
-pip install -e .
+## Colab installation 
+pip install git+https://github.com/michedini/CODE.git
