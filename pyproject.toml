@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "custom-functions"
+version = "0.1.0"
+description = "Reusable custom statistical helper functions."
+readme = "README.md"
+requires-python = ">=3.9"
+
+authors = [
+    { name = "Michelangelo Dini" }
+]
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+]
+
+[project.optional-dependencies]
+plot = ["matplotlib", "seaborn"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

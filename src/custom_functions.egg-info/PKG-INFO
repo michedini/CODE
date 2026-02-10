@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: custom-functions
+Version: 0.1.0
+Summary: Reusable custom statistical helper functions.
+Author: Michelangelo Dini
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: scipy
+Provides-Extra: plot
+Requires-Dist: matplotlib; extra == "plot"
+Requires-Dist: seaborn; extra == "plot"
+
+# custom_functions
+
+Reusable statistical helper functions for analysis and visualization.
+
+## Installation (editable mode)
+```bash
+pip install -e .
