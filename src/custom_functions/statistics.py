@@ -205,16 +205,15 @@ def compare_groups(
     if plot:
         if sns is None or plt is None:
             raise ImportError("Plotting requires seaborn and matplotlib.")        
-        ax = sns.boxplot(
+        sns.boxplot(
             data=df,
             x=grouping_var,
             y=dependent_var,
             hue=grouping_var,
             dodge=False,
+            legend = None
         )
-        legend = ax.get_legend()
-        if legend is not None:
-            legend.remove()
+        
         plt.xlabel(grouping_var)
         plt.ylabel(dependent_var)
         plt.show()
