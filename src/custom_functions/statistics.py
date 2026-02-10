@@ -204,7 +204,8 @@ def compare_groups(
 
     if plot:
         if sns is None or plt is None:
-            raise ImportError("Plotting requires seaborn and matplotlib.")        
+            raise ImportError("Plotting requires seaborn and matplotlib.") 
+        plt.figure(figsize=(4, 6))       
         sns.boxplot(
             data=df,
             x=grouping_var,
