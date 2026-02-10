@@ -69,7 +69,6 @@ def correlate(
             if sns is None or plt is None:
                 raise ImportError("Plotting requires seaborn and matplotlib.")
             sns.regplot(data=corr_df, x=x, y=y, **kwargs)
-            plt.title(f"Pearson r={r:.3f}, p={_format_p(p)}, n={n}")
             plt.show()
 
     elif how == "spearman":
@@ -82,7 +81,7 @@ def correlate(
             sns.regplot(data=ranked, x=x, y=y, **kwargs)
             plt.xlabel(f"{x} (rank)")
             plt.ylabel(f"{y} (rank)")
-            plt.title(f"Spearman rho={r:.3f}, p={_format_p(p)}, n={n}")
+
             plt.show()
     else:
         raise ValueError('"how" must be either "pearson" or "spearman".')
@@ -209,7 +208,6 @@ def compare_groups(
         sns.boxplot(data=df, x=grouping_var, y=dependent_var, hue = grouping_var, legend=False)
         plt.xlabel(grouping_var)
         plt.ylabel(dependent_var)
-        plt.title(f"{dependent_var} by {grouping_var}")
         plt.show()
 
     return results
@@ -266,7 +264,6 @@ def paired_ttest(
             legend=False,
             **kwargs,
         )
-        plt.title(f"Paired t: t={t:.3f}, p={_format_p(p)}, n={n}")
         plt.show()
 
     print(
