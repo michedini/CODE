@@ -128,6 +128,9 @@ def compare_groups(
     Returns
     -------
     results : dict
+        Dictionary with test statistics and effect sizes.
+        Includes both "cohen_d" and "hedges_g" for parametric mode.
+        In nonparametric mode, these effect-size values are np.nan.
     """
     df = data[[grouping_var, dependent_var]].dropna()
 
@@ -169,6 +172,7 @@ def compare_groups(
     t_stat, p_value = np.nan, np.nan
     lower_bound, higher_bound = np.nan, np.nan
     cohen_d = np.nan
+    hedges_g = np.nan
     u_stat = np.nan
     test_name = "ttest_ind" if parametric else "mannwhitneyu"
 
@@ -190,6 +194,9 @@ def compare_groups(
         pooled_sd = np.sqrt(((n1 - 1) * var1 + (n2 - 1) * var2) / (n1 + n2 - 2))
         if pooled_sd != 0 and not np.isnan(pooled_sd):
             cohen_d = float((group1.mean() - group2.mean()) / pooled_sd)
+            # Hedges' g (corrected for small sample sizes)
+            correction = 1 - (3 / (4 * (n1 + n2) - 9))
+            hedges_g = cohen_d * correction
     else:
         # Mann–Whitney U (independent samples). Keep two-sided by default.
         try:
@@ -215,6 +222,7 @@ def compare_groups(
         "u_stat": u_stat,
         "p_value": p_value,
         "cohen_d": cohen_d,
+        "hedges_g": hedges_g,
         "test": test_name,
     }
 
@@ -228,6 +236,7 @@ def compare_groups(
         print(f"Mean difference 95% CI = [{lower_bound:.3f} - {higher_bound:.3f}]")
         print(f"t = {t_stat:.3f}, p = {_format_p(p_value)}")
         print(f"Cohen's d = {cohen_d:.3f}")
+        print(f"Hedges' g = {hedges_g:.3f}")
     else:
         print(f"U = {u_stat:.3f}, p = {_format_p(p_value)}")
 
@@ -260,7 +269,7 @@ def paired_ttest(
     plot: bool = True,
     parametric: bool = True,
     **kwargs: Any,
-) -> Tuple[float, float, int, float]:
+) -> Dict[str, Any]:
     """
     Paired-samples comparison between x and y.
     Drops missing values listwise.
@@ -270,11 +279,10 @@ def paired_ttest(
 
     Returns
     -------
-    stat : float
-    p : float
-    n : int
-    cohens_dz : float
-        Cohen's dz = mean(diff) / sd(diff)
+    results : dict
+        Dictionary with paired-test statistics and effect sizes.
+        For parametric mode, includes t statistic, 95% CI, Cohen's dz, and Hedges' g.
+        For nonparametric mode, t-test-specific fields and effect sizes are np.nan.
     """
     test_df = df[[x, y]].dropna()
     n = len(test_df)
@@ -283,14 +291,17 @@ def paired_ttest(
 
     diffs = test_df[x] - test_df[y]
 
+    t_stat = np.nan
+    w_stat = np.nan
+
     if parametric:
-        stat, p = stats.ttest_rel(test_df[x], test_df[y])
-        stat, p = float(stat), float(p)
+        t_res = stats.ttest_rel(test_df[x], test_df[y])
+        t_stat, p = float(t_res.statistic), float(t_res.pvalue)
     else:
         if np.allclose(diffs.to_numpy(), 0):
             raise ValueError("Wilcoxon test is undefined when all paired differences are 0.")
         w_res = stats.wilcoxon(test_df[x], test_df[y])
-        stat, p = float(w_res.statistic), float(w_res.pvalue)
+        w_stat, p = float(w_res.statistic), float(w_res.pvalue)
 
     mean_diff = float(diffs.mean())
     if parametric:
@@ -304,6 +315,7 @@ def paired_ttest(
 
     sd_diff = float(diffs.std(ddof=1))
     cohens_dz = np.nan if (not parametric or sd_diff == 0) else float(mean_diff / sd_diff)
+    hedges_g = np.nan if not parametric else cohens_dz * (1 - (3 / (4 * n - 5)))
 
     if plot:
         if sns is None or plt is None:
@@ -322,6 +334,7 @@ def paired_ttest(
             legend.remove()
         plt.show()
 
+    stat = t_stat if parametric else w_stat
     stat_label = "t" if parametric else "W"
     msg = (
         f"{stat_label} = {stat:.3f}\n"
@@ -333,7 +346,22 @@ def paired_ttest(
         msg += (
             f"\nMean difference 95% CI = [{lower_bound:.3f} - {higher_bound:.3f}]\n"
             f"Cohen's dz = {cohens_dz:.3f}"
+            f"\nHedges' g = {hedges_g:.3f}"
         )
     print(msg)
 
-    return stat, p, int(n), cohens_dz
+    results = {
+        "x": x,
+        "y": y,
+        "n": int(n),
+        "test": "ttest_rel" if parametric else "wilcoxon",
+        "mean_difference": mean_diff,
+        "mean_difference_95CI": (lower_bound, higher_bound),
+        "t_stat": t_stat,
+        "w_stat": w_stat,
+        "p_value": float(p),
+        "cohens_dz": cohens_dz,
+        "hedges_g": hedges_g,
+    }
+
+    return results
